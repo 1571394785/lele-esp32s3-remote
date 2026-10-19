@@ -59,6 +59,7 @@ async function appFixture(options = {}) {
   const elements = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, { textContent: "", value: id === "baud" ? "460800" : 0,
+      options: [], replaceChildren(...children) { this.options = children; },
       disabled: true, hidden: false, files: [], scrollTop: 0, clientHeight: 100, scrollHeight: 100,
       classList: { toggle() {} }, events: {}, addEventListener(name, callback) { this.events[name] = callback; } });
     return elements.get(id);
@@ -80,7 +81,7 @@ async function appFixture(options = {}) {
   };
   const port = { readable: { getReader: () => reader }, writable: {}, async open() {}, async close() { calls.closes++; } };
   const context = vm.createContext({
-    document: { getElementById: element },
+    document: { getElementById: element, createElement: () => ({}) },
     navigator: options.unsupported ? {} : { serial: {
       async requestPort() {
         calls.requests++;
@@ -105,6 +106,11 @@ async function appFixture(options = {}) {
     validateManifest, checkApplicationImage, progressPercent,
     checkedBytes: (bytes, size, hash) => checkedBytes(bytes, size, hash, webcrypto),
     async fetch(url) {
+      if (String(url).endsWith("releases.json")) return { ok: true, json: async () => [
+        { version: value.version, manifest: "manifest.json" },
+        { version: "v0.1.0", manifest: "releases/v0.1.0/manifest.json" },
+      ] };
+      if (String(url).includes("releases/v0.1.0/manifest.json")) return { ok: true, json: async () => ({ ...value, version: "v0.1.0", parts: value.parts.map(part => ({...part, sha256: "0".repeat(64)})) }) };
       if (String(url).endsWith("manifest.json")) return { ok: true, json: async () => value };
       return { ok: true, arrayBuffer: async () => firmware.buffer };
     },
@@ -176,4 +182,19 @@ test("log mode renders serial data as text and releases the reader on disconnect
   await app.click("disconnect");
   assert.equal(app.element("connect").disabled, false);
   assert.equal(app.calls.closes, 1);
+});
+
+test("release selector loads the chosen version and refuses its corrupt firmware", async () => {
+  const app = await appFixture();
+  const select = app.element("release-select");
+  assert.equal(select.options.length, 2);
+  assert.equal(select.disabled, false);
+  await app.click("connect");
+  select.value = "https://example.com/remote/firmware/releases/v0.1.0/manifest.json";
+  await select.events.change();
+  assert.equal(app.element("version").textContent, "v0.1.0");
+  assert.match(app.element("release-link").href, /tag\/v0.1.0$/);
+  await app.click("install");
+  assert.equal(app.calls.writes.length, 0);
+  assert.match(app.element("status").textContent, /校验失败/);
 });

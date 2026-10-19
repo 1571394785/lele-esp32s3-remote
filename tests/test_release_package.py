@@ -20,6 +20,7 @@ def load(name):
 packager = load("package_release")
 publisher = load("publish_release")
 web_builder = load("build_web")
+catalog_builder = load("build_release_catalog")
 
 
 class ReleaseTests(unittest.TestCase):
@@ -115,6 +116,31 @@ class ReleaseTests(unittest.TestCase):
         (self.build / "caiji.bin").write_bytes(b"different build")
         with self.assertRaisesRegex(ValueError, "does not match"):
             web_builder.build_site(self.root, self.build, self.root / "site", self.dist / "BUILD_INFO.json")
+
+    def test_historical_release_is_checked_and_copied(self):
+        self.package()
+        archive = next(self.dist.glob("*-firmware.zip"))
+        release = {"tag_name": self.version, "published_at": "2026-10-19T00:00:00Z"}
+        site = self.root / "site"
+        entry = catalog_builder.import_release(site, release, archive.read_bytes())
+        manifest_path = site / "firmware" / entry["manifest"]
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["version"], self.version)
+        self.assertEqual((manifest_path.parent / "caiji.bin").read_bytes(), b"NEW BUILD caiji.bin")
+        release["tag_name"] = "../escape"
+        with self.assertRaises(ValueError):
+            catalog_builder.import_release(site, release, archive.read_bytes())
+
+    def test_historical_release_corruption_is_rejected(self):
+        import io
+        self.package()
+        archive = next(self.dist.glob("*-firmware.zip"))
+        data = io.BytesIO()
+        with zipfile.ZipFile(archive) as original, zipfile.ZipFile(data, "w") as changed:
+            for name in original.namelist():
+                changed.writestr(name, b"corrupt" if name.endswith("/caiji.bin") else original.read(name))
+        with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+            catalog_builder.import_release(self.root / "site", {"tag_name": self.version}, data.getvalue())
 
 
 if __name__ == "__main__":

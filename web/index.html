@@ -26,13 +26,14 @@
       <section class="card install-card" aria-labelledby="install-title">
         <div class="card-heading"><h2 id="install-title">安装固件</h2><span id="connection" class="pill">未连接</span></div>
         <div class="firmware-box">
-          <span class="field-label">本站最新构建</span>
+          <span class="field-label">所选发行版</span>
+          <label class="speed-label" for="release-select">选择发行版</label><select id="release-select" disabled aria-label="选择发行版"></select>
           <strong id="version">正在读取固件信息…</strong>
           <p id="build-detail">固件与 GitHub Actions 的成功构建同步更新。</p>
           <a id="release-link" class="text-link" href="https://github.com/1571394785/lele-esp32s3-remote/releases/latest" target="_blank" rel="noopener">查看对应发行版 ↗</a>
         </div>
         <ol class="steps"><li><span>1</span>用支持数据传输的 USB 线连接遥控器。</li><li><span>2</span>点击连接，选择 ESP32-S3 对应的串口。</li><li><span>3</span>开始烧录，完成后设备会自动重启。</li></ol>
-        <div class="actions"><button id="connect" class="button secondary" disabled>连接设备</button><button id="install" class="button primary" disabled>烧录最新固件</button></div>
+        <div class="actions"><button id="connect" class="button secondary" disabled>连接设备</button><button id="install" class="button primary" disabled>烧录所选固件</button></div>
         <div class="progress-heading"><span id="status" role="status" aria-live="polite">正在准备页面</span><strong id="percent">0%</strong></div>
         <progress id="progress" max="100" value="0" aria-label="烧录进度"></progress>
         <p class="small muted">默认保留配对、设备名称和自定义设置。自动构建固件仍需实机验证；烧录时请保持 USB 连接。</p>

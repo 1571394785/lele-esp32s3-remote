@@ -50,6 +50,7 @@ jobs:
           python tests/run_air_mouse_frame.py
           python tools/package_release.py --version "$RELEASE_VERSION" --commit "$GITHUB_SHA"
           python tools/build_web.py
+          python tools/build_release_catalog.py
       - name: Save downloadable build packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

@@ -3,7 +3,7 @@ import { validateManifest, checkedBytes, checkApplicationImage, progressPercent 
 
 const $ = id => document.getElementById(id);
 const supported = Boolean(navigator.serial && globalThis.isSecureContext);
-const manifestUrl = new URL("./firmware/manifest.json", import.meta.url);
+let manifestUrl = new URL("./firmware/manifest.json", import.meta.url);
 const state = { busy: false, mode: null, port: null, transport: null, loader: null,
   manifest: null, reader: null, readTask: null, chip: "等待连接" };
 
@@ -26,6 +26,7 @@ function render() {
   $("install").disabled = state.busy || state.mode !== "flash" || !state.manifest;
   $("custom-install").disabled = state.busy || state.mode !== "flash" || !$("custom-file").files.length;
   $("custom-file").disabled = state.busy;
+  $("release-select").disabled = state.busy || !$("release-select").options.length;
   $("baud").disabled = state.busy || connected;
   $("restart").disabled = state.busy || state.mode !== "flash";
   $("disconnect").disabled = state.busy || !connected;
@@ -173,14 +174,49 @@ $("browser-warning").hidden = supported;
 status(supported ? "请先连接设备。" : "请使用电脑上的 Edge 或 Chrome 打开本页。");
 render();
 
-try {
-  const response = await fetch(manifestUrl, { cache: "no-store" });
-  if (!response.ok) throw new Error("尚未获取到网站固件，请稍后刷新。");
-  state.manifest = validateManifest(await response.json(), manifestUrl);
+async function loadManifest(url) {
+  state.manifest = null;
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error("尚未获取到所选版本固件，请稍后刷新。");
+  state.manifest = validateManifest(await response.json(), url);
+  manifestUrl = url;
   $("version").textContent = state.manifest.version;
   const date = new Date(state.manifest.builtAt).toLocaleString("zh-CN");
-  $("build-detail").textContent = "构建于 " + date + " · 提交 " + state.manifest.commit.slice(0, 7) + " · ESP32-S3";
+  $("build-detail").textContent = "构建于 " + date + (state.manifest.commit ? " · 提交 " + state.manifest.commit.slice(0, 7) : "") + " · ESP32-S3";
   $("release-link").href = "https://github.com/1571394785/lele-esp32s3-remote/releases/tag/" + encodeURIComponent(state.manifest.version);
+  render();
+}
+$("release-select").addEventListener("change", async () => {
+  state.busy = true; render();
+  try {
+    await loadManifest(new URL($("release-select").value));
+    progress(0);
+    status("已选择 " + state.manifest.version + (state.mode === "flash" ? "，可以开始烧录。" : "，请连接设备。"));
+  } catch (error) {
+    $("version").textContent = "所选固件不可用"; failure(error);
+  } finally { state.busy = false; render(); }
+});
+try {
+  await loadManifest(manifestUrl);
+  try {
+    const catalogUrl = new URL("./releases.json", manifestUrl);
+    const response = await fetch(catalogUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error("发行版列表暂不可用，仍可烧录本站最新版本。");
+    const catalog = await response.json();
+    if (!Array.isArray(catalog) || !catalog.length) throw new Error("发行版列表为空。");
+    const choices = catalog.map((release, index) => {
+      const url = new URL(release.manifest, catalogUrl);
+      if (url.origin !== catalogUrl.origin || !url.pathname.startsWith(new URL("./", catalogUrl).pathname)) {
+        throw new Error("发行版地址无效。");
+      }
+      const option = document.createElement("option");
+      option.value = url.href;
+      option.textContent = release.version + (index === 0 ? "（最新构建）" : release.prerelease ? "（预发行）" : "");
+      return option;
+    });
+    $("release-select").replaceChildren(...choices);
+    $("release-select").value = manifestUrl.href;
+  } catch (error) { line(error.message); }
   render();
 } catch (error) {
   $("version").textContent = "固件暂时不可用";
