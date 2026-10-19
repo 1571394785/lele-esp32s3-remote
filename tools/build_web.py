@@ -31,6 +31,13 @@ def build_site(root, build, output, info_path):
                       "size": len(data), "sha256": digest})
         binaries.append((relative, data))
     shutil.copytree(root / "web", output, dirs_exist_ok=True)
+    # Pages caches static files for ten minutes. A fresh HTML document must
+    # always load scripts/styles from the same build, even after an update.
+    index = output / "index.html"
+    html = index.read_text(encoding="utf-8")
+    for asset in ("app.mjs", "style.css"):
+        html = html.replace(f'./{asset}"', f'./{asset}?v={info["commit"]}"')
+    index.write_text(html, encoding="utf-8")
     (output / ".nojekyll").touch()
     for relative, data in binaries:
         target = output / "firmware" / relative
