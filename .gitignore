@@ -13,3 +13,4 @@ data/*
 *.map
 .DS_Store
 dist/
+site/

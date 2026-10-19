@@ -2,6 +2,15 @@
 
 支持三设备切换的 BLE HID 遥控器，集成体感鼠标、键盘/媒体控制、OLED 中文菜单和 Wi-Fi 自定义设置。
 
+## 网页烧录
+
+打开 **[遥控器网页烧录](https://1571394785.github.io/lele-esp32s3-remote/)**，使用电脑上的 Edge 或 Chrome，通过 USB 连接 ESP32-S3 遥控器，即可安装本站最新编译固件。
+
+页面提供设备识别、固件完整性校验、烧录进度、写入后 MD5 校验、重启及运行日志读取。
+默认保留 NVS 中的配对、设备名和自定义设置，不进行整片擦除。日志只显示连接后的新输出，不会上传。
+也可选择本项目布局下的 ESP32-S3 应用 .bin，固定写入应用分区；不适用于其他芯片或整片镜像。
+网站固件与每次成功构建和发行同步更新，烧录库固定版本并随站点自托管。
+
 ## 当前归档
 
 - 版本：v0.1.0，2026-10-19 固件快照。
@@ -14,7 +23,7 @@
 
 推送到 `main` 后，GitHub Actions 会使用 ESP-IDF v5.4.1 编译并运行回归测试，成功后自动创建 GitHub Release。
 发行编号格式为 `build-运行编号-重试次数-提交短哈希`，每次推送独立保留。构建失败时不会发布。
-PR 只做构建、测试和产物打包；也可以在 Actions 页手动运行。
+PR 只做构建、测试和产物打包；也可以在 Actions 页手动运行。主分支成功发版后会自动部署网页与本次新固件到 GitHub Pages。
 
 [构建记录](https://github.com/1571394785/lele-esp32s3-remote/actions/workflows/firmware-release.yml) · [下载最新发行版](https://github.com/1571394785/lele-esp32s3-remote/releases/latest)
 

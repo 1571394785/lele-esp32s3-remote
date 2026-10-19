@@ -19,6 +19,7 @@ def load(name):
 
 packager = load("package_release")
 publisher = load("publish_release")
+web_builder = load("build_web")
 
 
 class ReleaseTests(unittest.TestCase):
@@ -93,6 +94,27 @@ class ReleaseTests(unittest.TestCase):
         (self.build / "flasher_args.json").write_text(json.dumps(self.args))
         with self.assertRaisesRegex(ValueError, "escapes build directory"):
             self.package()
+
+    def test_web_manifest_uses_verified_build_and_preserves_nvs_region(self):
+        self.package()
+        (self.root / "web").mkdir()
+        (self.root / "web/index.html").write_text("web flasher")
+        output = self.root / "site"
+        manifest = web_builder.build_site(self.root, self.build, output, self.dist / "BUILD_INFO.json")
+        self.assertEqual({part["offset"] for part in manifest["parts"]}, {0, 0x8000, 0x10000})
+        self.assertEqual(manifest["commit"], self.commit)
+        self.assertEqual((output / "firmware/caiji.bin").read_bytes(), b"NEW BUILD caiji.bin")
+        self.assertEqual((output / "index.html").read_text(), "web flasher")
+        for part in manifest["parts"]:
+            data = (output / "firmware" / part["path"]).read_bytes()
+            self.assertEqual(len(data), part["size"])
+            self.assertEqual(packager.sha256(data), part["sha256"])
+
+    def test_web_refuses_firmware_changed_after_release_packaging(self):
+        self.package()
+        (self.build / "caiji.bin").write_bytes(b"different build")
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            web_builder.build_site(self.root, self.build, self.root / "site", self.dist / "BUILD_INFO.json")
 
 
 if __name__ == "__main__":

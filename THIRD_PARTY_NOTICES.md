@@ -2,6 +2,10 @@
 
 根目录的 0BSD 许可证适用于本项目原创代码，不替代已有第三方许可。
 
+- web/vendor/esptool-js-0.7.0.js：Espressif esptool-js 0.7.0，Apache-2.0；许可证见同目录 esptool-js-LICENSE.txt。
+- web/vendor/spark-md5-3.0.2.min.js：spark-md5 3.0.2，MIT；许可证见同目录 spark-md5-LICENSE.txt。
+- esptool-js 的单文件包内含 pako；其 MIT / Zlib 声明见 web/vendor/pako-LICENSE.txt。
+
 - main/bmi220fw.h：Bosch Sensortec，BSD-3-Clause；完整声明保留在源文件及 licenses/。
 - main/bmi270_config.h：Bosch Sensortec，BSD-3-Clause；完整声明保留在源文件及 licenses/。
 - main/bmi220.h：Tailsy13 与 SlimeVR Contributors，MIT；完整声明保留在源文件及 licenses/。
