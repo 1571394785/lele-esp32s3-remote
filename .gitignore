@@ -1,0 +1,14 @@
+build/
+.venv/
+__pycache__/
+*.pyc
+sdkconfig.old
+.env
+.env.*
+!.env.example
+data/*
+!data/README.md
+*.log
+*.elf
+*.map
+.DS_Store
