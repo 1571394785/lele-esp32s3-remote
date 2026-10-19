@@ -12,3 +12,4 @@ data/*
 *.elf
 *.map
 .DS_Store
+dist/

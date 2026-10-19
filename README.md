@@ -6,9 +6,27 @@
 
 - 版本：v0.1.0，2026-10-19 固件快照。
 - 框架：ESP-IDF v5.4.1，目标 ESP32-S3。
-- firmware/ 中的应用、引导程序和分区表与本次实际烧录文件逐字节一致。
+- Git 仓库中的 firmware/ 保存首次归档的实机固件；自动发行包中的 firmware/ 由该次 CI 新编译内容替换。
 - 已通过主机端回归测试、编译与 COM3 写入校验。日志复核了 Windows/手机配对及双向回连，修正后一次15秒 Windows 输入采样没有出现原先的重复位移洪泛。
 - 用户最终手感、长时间稳定性和所有系统组合仍需实机验证；此快照不作全面稳定版承诺。
+
+## 自动编译与发行
+
+推送到 `main` 后，GitHub Actions 会使用 ESP-IDF v5.4.1 编译并运行回归测试，成功后自动创建 GitHub Release。
+发行编号格式为 `build-运行编号-重试次数-提交短哈希`，每次推送独立保留。构建失败时不会发布。
+PR 只做构建、测试和产物打包；也可以在 Actions 页手动运行。
+
+[构建记录](https://github.com/1571394785/lele-esp32s3-remote/actions/workflows/firmware-release.yml) · [下载最新发行版](https://github.com/1571394785/lele-esp32s3-remote/releases/latest)
+
+每次自动发行包含：
+
+- `*-firmware.zip`：本次新编译的应用、引导程序、分区表、烧录说明和许可。
+- `*-source-and-firmware.zip`：源码与本次新编译固件的整包。
+- `BUILD_INFO.json`：对应提交、构建时间和固件校验值。
+- `SHA256SUMS`：下载文件的 SHA-256 校验。
+
+只使用 GitHub 自动提供的 `GITHUB_TOKEN`，无需自行创建密钥。自动编译成功不等于实机已验证。
+仓库中原有 `v0.1.0` 固件快照保持独立，下载更新应以 Releases 中对应提交的产物为准。
 
 ## 功能
 

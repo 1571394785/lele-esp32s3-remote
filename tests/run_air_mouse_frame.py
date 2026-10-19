@@ -39,3 +39,5 @@ subprocess.run([sys.executable, str(root / "tests/test_oled_pixel_scroll.py")], 
 subprocess.run([sys.executable, str(root / "tests/test_buttons_scanner.py")], check=True)
 
 subprocess.run([sys.executable, str(root / "tests/test_bmi220_startup_wait.py")], check=True)
+
+subprocess.run([sys.executable, str(root / "tests/test_release_package.py")], check=True)
