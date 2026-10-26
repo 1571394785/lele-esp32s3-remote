@@ -1,7 +1,7 @@
 # 乐乐牌 ESP32-S3 蓝牙遥控器
 
 支持三设备切换的 BLE HID 遥控器，集成体感鼠标、键盘/媒体控制、OLED 中文菜单和 Wi-Fi 自定义设置。
-
+硬件开源地址 (https://oshwhub.com/lele_quan/project_kjcpqiwm?jspm=hub.zy.zp.gc1___hub.ex.zp&jlc_vid=RwUMAwUFEQIMVwUHEllWUQICE1EIBVxRQwBcBF1eEVMxVlNfRVhWV11SQVhfVjtWKAkaExQVTU5BCBcOAAkbBUoFGAw%3D)
 ## 网页烧录
 
 打开 **[遥控器网页烧录](https://1571394785.github.io/lele-esp32s3-remote/)**，使用电脑上的 Edge 或 Chrome，通过 USB 连接 ESP32-S3 遥控器，即可安装本站最新编译固件。
