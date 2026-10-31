@@ -52,6 +52,24 @@ static const char * const MODE_NAMES[MODE_COUNT] = {
     "鼠标模式",
 };
 
+// Menu order is independent of persistent mode IDs. Restore mobile entries here.
+static const app_mode_t SELECTABLE_MODES[] = {
+    APP_MODE_DOUYIN_PC,
+    APP_MODE_MEDIA_CTRL,
+    APP_MODE_CUSTOM,
+    APP_MODE_GAMEPAD,
+    APP_MODE_MOUSE,
+};
+#define SELECTABLE_MODE_COUNT (sizeof(SELECTABLE_MODES) / sizeof(SELECTABLE_MODES[0]))
+
+static uint8_t mode_menu_index(app_mode_t mode)
+{
+    for (uint8_t i = 0; i < SELECTABLE_MODE_COUNT; i++) {
+        if (SELECTABLE_MODES[i] == mode) return i;
+    }
+    return 0;
+}
+
 static const char * const MODE_ACTIONS[MODE_COUNT][4] = {
     [APP_MODE_DOUYIN_PC]     = {"方向上", "方向下", "待机", "右键锁定"},
     [APP_MODE_DOUYIN_IOS]    = {"上拖动", "下拖动", "待机", "空"},
@@ -295,10 +313,10 @@ static void fill_view(mode_view_t *view)
 
         case MENU_PAGE_MODES:
             view->title = "模式切换";
-            view->item_count = MODE_COUNT;
+            view->item_count = SELECTABLE_MODE_COUNT;
             view->show_scrollbar = view->item_count > 3;
             for (uint8_t i = 0; i < view->item_count; i++) {
-                view->items[i] = MODE_NAMES[i];
+                view->items[i] = MODE_NAMES[SELECTABLE_MODES[i]];
             }
             break;
 
@@ -635,7 +653,7 @@ bool mode_manager_update(button_key_t key, uint32_t now_ms, mode_view_t *view, m
                 } else {
                     s_menu_page = MENU_PAGE_DEVICES;
                 }
-                s_menu_sel = (s_menu_page == MENU_PAGE_MODES) ? (uint8_t)s_mode :
+                s_menu_sel = (s_menu_page == MENU_PAGE_MODES) ? mode_menu_index(s_mode) :
                              (s_menu_page == MENU_PAGE_DEVICES) ? ble_hid_get_selected_device_slot() : 0;
             } else if (s_menu_page == MENU_PAGE_DEVICES) {
                 if (action != NULL) {
@@ -643,7 +661,7 @@ bool mode_manager_update(button_key_t key, uint32_t now_ms, mode_view_t *view, m
                     action->value = s_menu_sel;
                 }
             } else if (s_menu_page == MENU_PAGE_MODES) {
-                s_mode = (app_mode_t)s_menu_sel;
+                s_mode = SELECTABLE_MODES[s_menu_sel];
                 s_temporary_mouse = false;
                 nvs_save_mode((uint8_t)s_mode);
                 s_screen = APP_SCREEN_MODE;
@@ -770,7 +788,7 @@ bool mode_manager_update(button_key_t key, uint32_t now_ms, mode_view_t *view, m
             } else if (s_menu_page == MENU_PAGE_DEVICES) {
                 max_sel = BLE_HID_DEVICE_SLOT_COUNT - 1;
             } else if (s_menu_page == MENU_PAGE_MODES) {
-                max_sel = MODE_COUNT - 1;
+                max_sel = SELECTABLE_MODE_COUNT - 1;
             } else if (s_menu_page == MENU_PAGE_GAMES) {
                 max_sel = (sizeof(GAME_MENU_ITEMS) / sizeof(GAME_MENU_ITEMS[0])) - 1;
             } else if (s_menu_page == MENU_PAGE_SETTINGS) {
@@ -831,15 +849,12 @@ bool mode_manager_update(button_key_t key, uint32_t now_ms, mode_view_t *view, m
     }
 
     // FUNC1 enters menu in normal modes. Gamepad mode uses FUNC1+FUNC2 long press.
-    if (s_mode != APP_MODE_GAMEPAD && key == BUTTON_KEY_FUNC1 && key != s_last_key) {
+    if (s_mode != APP_MODE_GAMEPAD && !s_temporary_mouse &&
+        key == BUTTON_KEY_FUNC1 && key != s_last_key) {
         if (s_pc_right_held && action != NULL) {
             action->type = MODE_ACTION_KEYBOARD_RELEASE;
             action->value = 0x4F;
             s_pc_right_held = false;
-        }
-        if (s_mode == APP_MODE_MOUSE && s_temporary_mouse) {
-            s_mode = s_temporary_return_mode;
-            s_temporary_mouse = false;
         }
         mode_manager_enter_menu(view);
         changed = true;

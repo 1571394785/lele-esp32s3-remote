@@ -323,6 +323,10 @@ void app_main(void)
                 app_mouse_enter(&mouse, button_mask);
             }
             uint16_t mouse_mask = button_mask;
+            // Temporary PC mouse: F1 shares the normal F2 wheel path; F2 still exits.
+            if (view.is_temporary_mouse && (mouse_mask & BUTTON_MASK_FUNC1) != 0) {
+                mouse_mask = (mouse_mask & ~BUTTON_MASK_FUNC1) | BUTTON_MASK_FUNC2;
+            }
             if (view.show_air_mouse_config) {
                 mouse_mask &= BUTTON_MASK_UP | BUTTON_MASK_DOWN | BUTTON_MASK_LEFT | BUTTON_MASK_RIGHT;
             }
